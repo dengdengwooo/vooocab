@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline';">
+    <title>技术支持 - VOOOCAB</title>
+    <script>
+        // 在页面渲染前检测语言，动态修改标题
+        (function() {
+            try {
+                var isZh = false;
+                var primaryLang = '';
+                if (navigator.languages && navigator.languages.length > 0) {
+                    primaryLang = navigator.languages[0];
+                } else {
+                    primaryLang = navigator.language || navigator.userLanguage || navigator.browserLanguage || '';
+                }
+                if (primaryLang.toLowerCase().indexOf('zh') !== -1) {
+                    isZh = true;
+                }
+                if (!isZh) {
+                    document.title = 'Support - VOOOCAB';
+                }
+            } catch (e) {
+                console.error("Language detection failed", e);
+            }
+        })();
+    </script>
+    <link rel="icon" type="image/png" href="vooocab_image_cn_en/logo_vooocab.png">
+    <link rel="apple-touch-icon" type="image/png" href="vooocab_image_cn_en/logo_vooocab.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #000;
+            --text-color: #fff;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+        .container {
+            width: 100%;
+            padding-top: 120px; /* 从 80px 增加到 120px，让整体文本往下移动，给返回按钮留出空间 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+        .content-wrapper {
+            width: 90vw;
+            text-align: left;
+            margin-top: 40px;
+            margin-bottom: 40px;
+            white-space: pre-wrap;
+        }
+        h1 {
+            font-size: 40px; /* 从 32px 增大到 40px，提升标题的视觉层级 */
+            margin-bottom: 30px;
+        }
+        p {
+            font-size: 16px;
+            color: #e0e0e0;
+            margin-bottom: 20px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 40px;
+            color: #86868b;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-link:hover {
+            color: #fff;
+        }
+        .top-nav {
+            position: absolute;
+            top: 80px; /* 整体往下移动，你可以通过修改这个数值来调整整体的上下位置 */
+            left: calc(5vw - 16px);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px; /* Logo和返回按钮之间的间距 */
+            padding: 16px;
+        }
+        .logo-link {
+            color: #86868b;
+            text-decoration: none;
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .back-arrow {
+            color: #d1d1d6; /* 更亮的浅灰色 */
+        }
+        .top-back-link {
+            color: #86868b;
+            text-decoration: none;
+            font-size: 18px;
+        }
+        .top-back-link:hover {
+            color: #fff;
+        }
+
+        .font-license {
+            margin-top: 60px;
+            font-size: 12px;
+            color: #86868b;
+            text-align: right;
+        }
+        .font-license a {
+            color: #86868b;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-nav">
+        <a href="index.html" class="logo-link"><span class="back-arrow">←</span>   VOOOCAB</a>
+    </div>
+    <div class="container">
+        <div class="content-wrapper">
+            <h1>技术支持 / Support</h1>
+            <p>Hi, 如果你在使用过程中遇到问题或有任何建议，请通过以下方式联系。</p>
+            <p>If you encounter any issues or have any suggestions, please feel free to reach out.</p>
+            <p>联系邮箱/E-mail：voooooocab@gmail.com</p>
+
+<a href="index.html" class="back-link">返回首页 / Back to Home</a>
+        </div>
+
+        <!-- 字体开源协议声明 -->
+        <div style="position: fixed; bottom: 10px; right: 15px; font-size: 12px; color: #86868b; z-index: 1000; text-align: right;">
+            Font <a href="https://fonts.google.com/specimen/Noto+Sans+SC" target="_blank" style="color: #86868b; text-decoration: underline;">Noto Sans SC</a> is licensed under the <a href="https://scripts.sil.org/OFL" target="_blank" style="color: #86868b; text-decoration: underline;">SIL Open Font License</a>.
+        </div>
+    </div>
+</body>
+
+</html>

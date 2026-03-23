@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline';">
+    <title>VOOOCAB</title>
+    <meta name="description" content="VOOOCAB 是一款由AI驱动的英语单词本生成工具，帮你快速筛选单词并生成个性化学习材料, 最后导出为可打印的 PDF 文档。">
+    <meta property="og:title" content="VOOOCAB 是一款由AI驱动的英语单词本生成工具，帮你快速筛选单词并生成个性化学习材料, 最后导出为可打印的 PDF 文档。">
+    <meta property="og:description" content="VOOOCAB 是一款由AI驱动的英语单词本生成工具，帮你快速筛选单词并生成个性化学习材料, 最后导出为可打印的 PDF 文档。">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/png" href="vooocab_image_cn_en/logo_vooocab.png">
+    <link rel="apple-touch-icon" type="image/png" href="vooocab_image_cn_en/logo_vooocab.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        // 【前置执行】在页面渲染前检测语言，防止内容闪烁 (FOUC)
+        (function() {
+            try {
+                var isZh = false;
+                
+                // 仅获取浏览器的“第一首选语言” (最准确反映用户当前想要的界面语言)
+                var primaryLang = '';
+                if (navigator.languages && navigator.languages.length > 0) {
+                    primaryLang = navigator.languages[0]; // 严格只看第一位！
+                } else {
+                    primaryLang = navigator.language || navigator.userLanguage || navigator.browserLanguage || '';
+                }
+
+                // 如果第一首选语言包含 'zh' (如 zh-CN, zh-TW 等)，则判定为中文
+                if (primaryLang.toLowerCase().indexOf('zh') !== -1) {
+                    isZh = true;
+                }
+
+                // 如果不是中文，则切换到英文模式
+                if (!isZh) {
+                    document.documentElement.lang = 'en';
+                    document.documentElement.classList.add('lang-en-mode');
+                }
+            } catch (e) {
+                // 异常兜底，默认保留中文
+                console.error("Language detection failed", e);
+            }
+        })();
+
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #000;
+            --text-color: #fff;
+            --accent-color: #0071e3;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 44px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+        }
+        nav a {
+            color: #f5f5f7;
+            text-decoration: none;
+            font-size: 12px;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        nav a:hover { opacity: 1; }
+
+        .container {
+            width: 100%;
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .image-scroll-container {
+            display: flex;
+            width: 90vw;
+            overflow-x: auto;
+            gap: 5px;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        
+        .image-scroll-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .image-section {
+            flex: 0 0 auto;
+            scroll-snap-align: start;
+            line-height: 0;
+            overflow: hidden;
+        }
+
+        .image-section img {
+            width: auto;
+            height: auto; 
+            max-width: 70vw;
+            max-height: 60vh;
+            object-fit: contain; 
+            display: block;
+            -webkit-user-drag: none;
+            border-radius: 3px;
+            /* 添加渐显动画，避免图片加载突兀 */
+            opacity: 0;
+            transition: opacity 0.3s ease-in;
+        }
+        .image-section img.loaded {
+            opacity: 1;
+        }
+        /* 图片加载失败时的兜底样式 */
+        .image-section img.error {
+            opacity: 1;
+            width: 70vw;
+            height: 60vh;
+            background-color: #1c1c1e; /* 深色占位背景 */
+            border: 1px solid #333;
+        }
+        .footer-content {
+            padding: 60px 20px;
+            text-align: center;
+            max-width: 90%;
+        }
+        h1 { font-size: 48px; margin-bottom: 20px; }
+        p { font-size: 20px; color: #86868b; margin-bottom: 30px; }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 32px; }
+            p { font-size: 16px; }
+            .image-section { margin-bottom: 2px; }
+        }
+
+        /* 语言切换核心 CSS */
+        .lang-en { display: none; }
+        html.lang-en-mode .lang-cn { display: none !important; }
+        html.lang-en-mode .lang-en { display: inline !important; }
+        html.lang-en-mode div.lang-en { display: block !important; }
+        html.lang-en-mode a.lang-en { display: inline-block !important; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部 Logo -->
+        <div style="width: 90vw; text-align: left; margin-top: 40px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+            <h1 style="margin-bottom: 0;">VOOOCAB</h1>
+        </div>
+
+        <!-- 7张图片展示区 (水平滚动) -->
+        <div class="image-scroll-container" id="gallery">
+            <div class="image-section">
+                <img data-cn-src="vooocab_image_cn_en/cn_vooocab_1.jpg" data-en-src="vooocab_image_cn_en/en_vooocab_1.jpg" data-cn-alt=" " data-en-alt=" ">
+            </div>
+            <div class="image-section">
+                <img data-cn-src="vooocab_image_cn_en/cn_vooocab_2.jpg" data-en-src="vooocab_image_cn_en/en_vooocab_2.jpg" data-cn-alt=" " data-en-alt=" ">
+            </div>
+            <div class="image-section">
+                <img data-cn-src="vooocab_image_cn_en/cn_vooocab_3.jpg" data-en-src="vooocab_image_cn_en/en_vooocab_3.jpg" data-cn-alt=" " data-en-alt=" ">
+            </div>
+            <div class="image-section">
+                <img data-cn-src="vooocab_image_cn_en/cn_vooocab_4.jpg" data-en-src="vooocab_image_cn_en/en_vooocab_4.jpg" data-cn-alt=" " data-en-alt=" ">
+            </div>
+            <div class="image-section">
+                <img data-cn-src="vooocab_image_cn_en/cn_vooocab_5.jpg" data-en-src="vooocab_image_cn_en/en_vooocab_5.jpg" data-cn-alt=" " data-en-alt=" ">
+            </div>
+            <div class="image-section">
+                <img data-cn-src="vooocab_image_cn_en/cn_vooocab_6.jpg" data-en-src="vooocab_image_cn_en/en_vooocab_6.jpg" data-cn-alt=" " data-en-alt=" ">
+            </div>
+            <div class="image-section">
+                <img data-cn-src="vooocab_image_cn_en/cn_vooocab_7.jpg" data-en-src="vooocab_image_cn_en/en_vooocab_7.jpg" data-cn-alt=" " data-en-alt=" ">
+            </div>
+        </div>
+
+        <!-- 底部功能介绍 -->
+        <div class="footer-content" style="text-align: left; width: 90vw; margin: 0 auto; padding: 40px 0;">
+            <h1 style="font-size: 15px; margin-bottom: 40px; line-height: 1.4;">
+                <span class="lang-cn">
+                    <span style="color: #ffffff;">VOOOCAB 是一款由AI驱动的英语单词本生成工具。可以帮你快速筛选单词，并通过大语言模型（LLM）为这些单词生成个性化的学习材料，最后导出为可打印的 PDF 文档。</span>
+                    <span style="color: #e0e0e0;">  I. 注意: <span style="color: #ffffff;">①</span> 本应用需要你自行准备兼容的大语言模型 API Key 进行内容生成。 <span style="color: #ffffff;">②</span> 单词的直译注释(翻译), 采用极小字体（3pt），打印后只有靠近才能看清，旨在引导你体验，猜测词义，而非被直接告知。</span>
+                    <span style="color: #c0c0c0;"> <span style="color: #ffffff;">II. 单词筛选：</span><span style="color: #ffffff;">①</span> 你可以使用多种方式对单词进行筛选和排序，高效地剔除已掌握的词汇，从而精准整理出你真正需要学习的新词。 <span style="color: #ffffff;">②</span> 用颜色来表示你对每个单词的熟悉度：黑色=不认识, 灰色=略懂, 白色=很熟。</span>
+                    <span style="color: #a0a0a0;"> <span style="color: #ffffff;">III. 个性化学习材料：</span> <span style="color: #ffffff;">①</span> 在配置 AI (大语言模型 API) 后，应用可以为选定的单词自动生成音标、释义、翻译、同义词对比以及应用场景。 <span style="color: #ffffff;">②</span> 可以自定义部分提示词，比如让AI在什么样的世界环境下用什么样的叙述风格来叙述，以获取个性化的学习材料。 <span style="color: #ffffff;">③</span> 双重质检机制：你可以选择是否启用 ‘质检功能’，可通过额外的 AI 请求对部分已经生成的内容进行质量校验，对‘不符合你要求’的内容进行‘标记’或‘重新生成’。 (审查准确率取决于模型种类与提示词工程的优化程度。) <span style="color: #ffffff;">④</span> 两种模式：Type-A：文字量较少。Type-B：文字量较多，侧重于单词的基础描述，语境联想，同义词对比。Type-B 同时支持你导入自己的 ‘本地图片文件库’ 来为每个单词配一张图(建议每张小于150kb) ，如果你没有图片库则会自动留出手绘区域。</span>
+                    <span style="color: #86868b;"> <span style="color: #ffffff;">IV. 排版与导出： </span> <span style="color: #ffffff;">①</span> 支持将生成的文本自动排版进 A5、A6 等尺寸的 .PDF 文件。 <span style="color: #ffffff;">②</span> 提供 '多排版' 以及 '不同装定方式' 的选项。 <span style="color: #ffffff;">③</span> 为了方便你装订成册，你可以在导出 .pdf 前根据 页数，册数，预估打印后的 ’实际每册厚度’。 <span style="color: #ffffff;">④</span> 可以选择导出'.dsv'文件（类似.csv），而非.pdf 。</span>
+                </span>
+                <span class="lang-en">
+                    <span style="color: #ffffff;">VOOOCAB is an AI-driven English vocabulary book generator. It helps you quickly filter words and uses Large Language Models (LLMs) to generate personalized learning materials, and eventually exporting them as printable PDF documents.</span>
+                    <span style="color: #e0e0e0;">  I. Note: <span style="color: #ffffff;">①</span> This app requires you to provide your own compatible LLM API Key for content generation. <span style="color: #ffffff;">②</span> Direct translations are printed in a tiny font (3pt), visible only up close, designed to encourage you to guess the meaning rather than being told directly.</span>
+                    <span style="color: #c0c0c0;"> <span style="color: #ffffff;">II. Word Filtering:</span><span style="color: #ffffff;">①</span> You can filter and sort words in multiple ways to efficiently remove known vocabulary, precisely organizing the new words you truly need to learn. <span style="color: #ffffff;">②</span> Use colors to indicate familiarity: Black = Unknown, Gray = Somewhat known, White = Well known.</span>
+                    <span style="color: #a0a0a0;"> <span style="color: #ffffff;">III. Personalized Materials:</span> <span style="color: #ffffff;">①</span> After configuring the AI (LLM API), the app automatically generates phonetics, definitions, translations, synonym comparisons, and usage scenarios. <span style="color: #ffffff;">②</span> You can customize some of the prompts, such as setting the world context and narrative style, to get personalized materials. <span style="color: #ffffff;">③</span> Content Review: You can enable the 'Content Review' feature to verify generated content via additional AI requests, marking or regenerating content that doesn't meet your standards. <span style="color: #ffffff;">④</span> Two Modes: Type-A (less text) and Type-B (more text, focusing on descriptions, context, senarios, and synonyms). Type-B supports importing your own 'local image library' (recommended <150kb per image); otherwise, a blank space is left for hand-drawing after printing. </span>
+                    <span style="color: #86868b;"> <span style="color: #ffffff;">IV. Layout & Export: </span> <span style="color: #ffffff;">①</span> Supports typesetting into A5, A6, etc., (PDF files). <span style="color: #ffffff;">②</span> Offers 'multiple layouts' and 'different binding methods' (or non-binding mode). <span style="color: #ffffff;">③</span> To help you print them into booklets, you can preview the 'actual thickness per booklet' based on pages and volumes before exporting. <span style="color: #ffffff;">④</span> You can choose to export a '.dsv' file (similar to .csv) instead of a .pdf.</span>
+                </span>
+            </h1>
+            <div style="margin-bottom: 260px;">
+                <div style="margin-bottom: 10px;">
+                    <a href="privacy.html" target="_blank" rel="noopener noreferrer" class="lang-cn" style="color: #86868b; text-decoration: none; font-size: 14px; margin-right: 20px;">VOOOCAB 隐私政策</a>
+                    <a href="privacy.html" target="_blank" rel="noopener noreferrer" class="lang-en" style="color: #86868b; text-decoration: none; font-size: 14px; margin-right: 20px;">Privacy Policy</a>
+                    <a href="eula.html" target="_blank" rel="noopener noreferrer" class="lang-cn" style="color: #86868b; text-decoration: none; font-size: 14px; margin-right: 20px;">最终用户许可协议</a>
+                    <a href="eula.html" target="_blank" rel="noopener noreferrer" class="lang-en" style="color: #86868b; text-decoration: none; font-size: 14px; margin-right: 20px;">EULA</a>
+                    <a href="third_part_notices.html" target="_blank" rel="noopener noreferrer" class="lang-cn" style="color: #86868b; text-decoration: none; font-size: 14px; margin-right: 20px;">第三方声明</a>
+                    <a href="third_part_notices.html" target="_blank" rel="noopener noreferrer" class="lang-en" style="color: #86868b; text-decoration: none; font-size: 14px; margin-right: 20px;">Third Party Notices</a>
+                    <a href="support.html" target="_blank" rel="noopener noreferrer" class="lang-cn" style="color: #86868b; text-decoration: none; font-size: 14px;">技术支持</a>
+                    <a href="support.html" target="_blank" rel="noopener noreferrer" class="lang-en" style="color: #86868b; text-decoration: none; font-size: 14px;">Support</a>
+                </div>
+                <div style="color: #86868b; font-size: 9px;">
+                    Copyright © 2025-2026 Chunxiang Wang
+                </div>
+            </div>
+        </div>
+
+        <!-- 字体开源协议声明 -->
+        <div style="position: fixed; bottom: 10px; right: 15px; font-size: 12px; color: #86868b; z-index: 1000; text-align: right;">
+            Font <a href="https://fonts.google.com/specimen/Noto+Sans+SC" target="_blank" rel="noopener noreferrer" style="color: #86868b; text-decoration: underline;">Noto Sans SC</a> is licensed under the <a href="https://scripts.sil.org/OFL" target="_blank" rel="noopener noreferrer" style="color: #86868b; text-decoration: underline;">SIL Open Font License</a>.
+        </div>
+
+    </div>
+
+    <script>
+        // 【安全执行】根据已确定的语言模式，安全地加载对应的图片
+        document.addEventListener("DOMContentLoaded", function() {
+            // 强制重置滚动位置到最左侧，防止浏览器记住上次的滚动位置
+            var gallery = document.getElementById('gallery');
+            if (gallery) {
+                gallery.scrollLeft = 0;
+            }
+
+            var isEnMode = document.documentElement.classList.contains('lang-en-mode');
+            if (isEnMode) {
+                document.title = 'VOOOCAB';
+            }
+            
+            var gallery = document.getElementById('gallery');
+            
+            // 核心修复：暂时禁用滚动吸附，强制回到最左侧
+            if (gallery) {
+                gallery.style.scrollSnapType = 'none';
+                gallery.scrollLeft = 0;
+                // 延迟 500 毫秒（等待初始布局稳定）后，再恢复滚动吸附功能
+                setTimeout(function() {
+                    gallery.style.scrollSnapType = 'x mandatory';
+                }, 500);
+            }
+
+            var images = document.querySelectorAll('#gallery img');
+            images.forEach(function(img) {
+                // 根据语言选择对应的 src 和 alt
+                var targetSrc = isEnMode ? img.getAttribute('data-en-src') : img.getAttribute('data-cn-src');
+                var targetAlt = isEnMode ? img.getAttribute('data-en-alt') : img.getAttribute('data-cn-alt');
+
+                
+                if (targetSrc) {
+                    img.setAttribute('alt', targetAlt || '');
+                    // 监听加载完成事件，添加渐显效果
+                    img.onload = function() {
+                        img.classList.add('loaded');
+                    };
+                    // 监听加载失败事件，添加兜底显示
+                    img.onerror = function() {
+                        img.classList.add('error');
+                    };
+                    // 触发下载
+                    img.setAttribute('src', targetSrc);
+
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
+
